@@ -1,6 +1,5 @@
 server:
   port: 8081
-
 jwt:
-  secret-key: mySecretKey
-  expiration-time: 86400000
+  secret-key: authservice-secret-key
+  expiration-time: 3600000

@@ -1,6 +1,5 @@
 package com.example.authservice.config;
 
-import com.example.authservice.service.MyUserDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,9 +18,6 @@ public class SecurityConfig {
 
     @Autowired
     JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @Autowired
-    MyUserDetailService userDetailService;
 
     @Bean
     public AuthenticationManager authManager(HttpSecurity http,

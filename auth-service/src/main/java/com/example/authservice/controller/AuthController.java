@@ -1,50 +1,35 @@
 package com.example.authservice.controller;
 
-import com.example.authservice.config.JwtTokenUtil;
 import com.example.authservice.dto.JwtResponse;
 import com.example.authservice.dto.LoginRequest;
+import com.example.authservice.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
     @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private JwtTokenUtil jwtTokenUtil;
+    private AuthService authService; // Инжектируем AuthService
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         try {
-            // Проверка аутентификации с логином и паролем
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
-            );
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            // Генерация JWT после успешной аутентификации
-            String token = jwtTokenUtil.generateToken((User) authentication.getPrincipal());
-
-            return ResponseEntity.ok(new JwtResponse(token));
+            // Валидация пользователя через сервис
+            String token = authService.authenticateAndGenerateToken(loginRequest.getUsername(), loginRequest.getPassword());
+            return ResponseEntity.ok(new JwtResponse(token)); // Возвращаем токен
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
         }
     }
 
-
-
+    @PostMapping("/validate")
+    public ResponseEntity<Boolean> validateUserCredentials(@RequestParam String email, @RequestParam String password) {
+        boolean isValid = authService.validateUserCredentials(email, password); // Валидация через сервис
+        return ResponseEntity.ok(isValid);
+    }
 }

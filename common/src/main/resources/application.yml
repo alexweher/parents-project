@@ -1,0 +1,3 @@
+jwt:
+  secret-key: mySecretKey
+  expiration-time: 86400000
