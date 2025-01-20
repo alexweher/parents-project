@@ -1,4 +1,4 @@
-package com.example.common;
+package com.example.authservice.config;
 
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
@@ -23,7 +23,7 @@ public class JwtTokenUtil {
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
-                .signWith(SignatureAlgorithm.HS512, secretKey);
+                .signWith(SignatureAlgorithm.HS256, secretKey);
 
         return builder.compact();
     }

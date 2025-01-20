@@ -1,4 +1,4 @@
-package com.example.userservice.config;
+package com.example.userservice.service;
 
 import com.example.userservice.model.User;
 import org.springframework.security.core.GrantedAuthority;

@@ -1,6 +1,5 @@
 package com.example.userservice.controller;
 
-
 import com.example.userservice.exception.UserNotFoundException;
 import com.example.userservice.model.User;
 import com.example.userservice.service.UserService;
@@ -49,7 +48,7 @@ public class UserController {
 
     //Получение пользователя по Id
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id){
+    public ResponseEntity<User> getUserById(@PathVariable("id") Long id){
         logger.info("Fetching user with ID: {}", id);
         Optional<User> user = userService.getUserById(id);
         return user.map(ResponseEntity::ok)
@@ -58,7 +57,7 @@ public class UserController {
 
     //Получение пользователя по Email
     @GetMapping("/email/{email}")
-    public ResponseEntity<User> getUserByEmail(@PathVariable String email) {
+    public ResponseEntity<User> getUserByEmail(@PathVariable("email") String email) {
         logger.info("Fetching user with email: {}", email);
         Optional<User> user = userService.getUserByEmail(email);
         return user.map(ResponseEntity::ok)
@@ -67,7 +66,8 @@ public class UserController {
 
     // Обновление пользователя
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Long id, @Valid @RequestBody User userDetails, BindingResult result) {
+    public ResponseEntity<?> updateUser(@PathVariable("id") Long id,
+                                        @Valid @RequestBody User userDetails, BindingResult result) {
         if (result.hasErrors()) {
             logger.error("Validation errors while updating user with ID: {}", id);
             // Здесь исключение с деталями ошибок будет обработано глобально
@@ -80,7 +80,7 @@ public class UserController {
 
     // удаление пользователя
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id){
+    public ResponseEntity<Void> deleteUser(@PathVariable("id") Long id){
         logger.info("Deleting user with ID: {}", id);
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();

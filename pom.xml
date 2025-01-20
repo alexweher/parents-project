@@ -12,7 +12,6 @@
     <modules>
         <module>userservice</module>
         <module>auth-service</module>
-        <module>common</module>
     </modules>
 
     <dependencyManagement>

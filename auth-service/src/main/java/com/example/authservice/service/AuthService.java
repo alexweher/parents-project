@@ -1,5 +1,6 @@
 package com.example.authservice.service;
 
+import com.example.authservice.config.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -12,6 +13,9 @@ public class AuthService {
 
     @Autowired
     private AuthenticationManager authenticationManager;
+
+    @Autowired
+    JwtTokenUtil jwtTokenUtil;
 
     // Метод для аутентификации пользователя по email и паролю
     public boolean validateUserCredentials(String email, String password) {
@@ -35,7 +39,7 @@ public class AuthService {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             // После успешной аутентификации, генерируем JWT
             // Здесь вы добавляете код для генерации JWT токена (например, через JwtTokenUtil)
-            return "generated_token"; // Возвращаем токен
+            return jwtTokenUtil.generateToken(username); // Возвращаем токен
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException("Invalid username or password");
         }
