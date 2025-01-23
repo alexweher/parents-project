@@ -22,7 +22,7 @@ public class User {
 
 
     @Email(message = "Invalid email format")
-    @Column(nullable = false, unique = true)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
 

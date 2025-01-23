@@ -1,5 +1,6 @@
 package com.example.userservice.controller;
 
+import com.example.userservice.dto.UserDto;
 import com.example.userservice.exception.UserNotFoundException;
 import com.example.userservice.model.User;
 import com.example.userservice.service.UserService;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,14 +57,14 @@ public class UserController {
                 .orElseThrow(() -> new UserNotFoundException("User with ID " + id + " not found"));
     }
 
-    //Получение пользователя по Email
-    @GetMapping("/email/{email}")
-    public ResponseEntity<User> getUserByEmail(@PathVariable("email") String email) {
-        logger.info("Fetching user with email: {}", email);
-        Optional<User> user = userService.getUserByEmail(email);
-        return user.map(ResponseEntity::ok)
-                .orElseThrow(() -> new UserNotFoundException("User with email " + email + " not found"));
-    }
+//    //Получение пользователя по Email
+//    @GetMapping("/email/{email}")
+//    public ResponseEntity<User> getUserByEmail(@PathVariable("email") String email) {
+//        logger.info("Fetching user with email: {}", email);
+//        Optional<User> user = userService.getUserByEmail(email);
+//        return user.map(ResponseEntity::ok)
+//                .orElseThrow(() -> new UserNotFoundException("User with email " + email + " not found"));
+//    }
 
     // Обновление пользователя
     @PutMapping("/{id}")
@@ -85,4 +87,31 @@ public class UserController {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
+
+
+    @GetMapping("/by-email")
+    public ResponseEntity<UserDto> getUserByEmail(@RequestParam(name = "email") String email) {
+        logger.info("Received request to fetch user by email: {}", email);
+
+        Optional<User> user = userService.getUserByEmail(email);
+
+        if (user.isEmpty()) {
+            logger.warn("No user found for email: {}", email);
+            return ResponseEntity.notFound().build();
+        }
+
+        User userEntity = user.get();
+        logger.info("User found: {}", userEntity);
+
+        // Преобразование роли из строки в список
+        List<String> roles = Arrays.asList(userEntity.getRoles().split(","));
+
+        UserDto userDto = new UserDto(
+                userEntity.getEmail(),
+                roles
+        );
+
+        return ResponseEntity.ok(userDto);
+    }
+
 }
