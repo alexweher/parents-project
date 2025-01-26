@@ -19,3 +19,8 @@ spring:
           type:
             descriptor:
               sql: TRACE
+      com:
+        example:
+          userservice:
+            service:
+              UserService: DEBUG

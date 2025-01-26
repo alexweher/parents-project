@@ -5,3 +5,6 @@ jwt:
   expiration-time: 3600000
 userservice:
   url: http://localhost:8080
+logging:
+  level:
+    com.example.authservice.service: DEBUG

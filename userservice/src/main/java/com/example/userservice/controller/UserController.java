@@ -10,61 +10,57 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
-
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
-
 
     @Autowired
     private UserService userService;
 
-    //создание пользователя
-    @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user){
-        logger.info("Creating a new user: {}", user);
-        if (user.getPassword() == null || user.getPassword().isEmpty()) {
-            throw new IllegalArgumentException("Password must not be empty");
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-        }
+    // Создание пользователя
+    @PostMapping
+    public ResponseEntity<User> createUser(@RequestBody User user) {
+        logger.info("Creating a new user: {}", user);
+
+        // Кодирование пароля перед сохранением
+        String encodedPassword = passwordEncoder.encode(user.getPassword());
+        user.setPassword(encodedPassword);
+
+        // Создание пользователя
         User createdUser = userService.createUser(user);
+
+        // Возврат успешного ответа с созданным пользователем
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
 
-    //Получение всех пользователей
+    // Получение всех пользователей
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers(){
+    public ResponseEntity<List<User>> getAllUsers() {
         logger.info("Fetching all users");
-        List<User> users= userService.getAllUsers();
+        List<User> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
 
-    //Получение пользователя по Id
+    // Получение пользователя по Id
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable("id") Long id){
+    public ResponseEntity<User> getUserById(@PathVariable("id") Long id) {
         logger.info("Fetching user with ID: {}", id);
         Optional<User> user = userService.getUserById(id);
         return user.map(ResponseEntity::ok)
                 .orElseThrow(() -> new UserNotFoundException("User with ID " + id + " not found"));
     }
-
-//    //Получение пользователя по Email
-//    @GetMapping("/email/{email}")
-//    public ResponseEntity<User> getUserByEmail(@PathVariable("email") String email) {
-//        logger.info("Fetching user with email: {}", email);
-//        Optional<User> user = userService.getUserByEmail(email);
-//        return user.map(ResponseEntity::ok)
-//                .orElseThrow(() -> new UserNotFoundException("User with email " + email + " not found"));
-//    }
 
     // Обновление пользователя
     @PutMapping("/{id}")
@@ -80,14 +76,13 @@ public class UserController {
         return ResponseEntity.ok(updatedUser);
     }
 
-    // удаление пользователя
+    // Удаление пользователя
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable("id") Long id){
+    public ResponseEntity<Void> deleteUser(@PathVariable("id") Long id) {
         logger.info("Deleting user with ID: {}", id);
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
-
 
     @GetMapping("/by-email")
     public ResponseEntity<UserDto> getUserByEmail(@RequestParam(name = "email") String email) {
@@ -106,9 +101,11 @@ public class UserController {
         // Преобразование роли из строки в список
         List<String> roles = Arrays.asList(userEntity.getRoles().split(","));
 
+        // Возвращаем UserDto с паролем
         UserDto userDto = new UserDto(
                 userEntity.getEmail(),
-                roles
+                roles,
+                userEntity.getPassword()  // передаем пароль
         );
 
         return ResponseEntity.ok(userDto);

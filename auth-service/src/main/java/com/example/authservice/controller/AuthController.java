@@ -11,8 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
 
 @RestController
 @RequestMapping("/auth")
@@ -21,12 +21,14 @@ public class AuthController {
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
     private final AuthService authService;
     private final UserServiceClient userServiceClient;
+    private PasswordEncoder passwordEncoder;
 
-
-    public AuthController(AuthService authService, UserServiceClient userServiceClient) {
+    public AuthController(AuthService authService, UserServiceClient userServiceClient,PasswordEncoder passwordEncoder) {
         this.authService = authService;
         this.userServiceClient = userServiceClient;
+        this.passwordEncoder = passwordEncoder;
     }
+
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
@@ -40,8 +42,11 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
             }
 
-            // Сравниваем пароль с тем, что пришел в запросе
-            if (userDto.getPassword() == null || !userDto.getPassword().equals(loginRequest.getPassword())) {
+            // Проверяем, совпадает ли введенный пароль с тем, что хранится в базе
+            boolean passwordMatches = passwordEncoder.matches(loginRequest.getPassword(), userDto.getPassword());
+            logger.info("Пароль совпадает для пользователя {}: {}", loginRequest.getUsername(), passwordMatches);
+
+            if (!passwordMatches) {
                 logger.warn("Неверный пароль для пользователя: {}", loginRequest.getUsername());
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
             }
@@ -58,6 +63,7 @@ public class AuthController {
         }
     }
 
+
     @PostMapping("/validate")
     public ResponseEntity<ValidationResponse> validateUserCredentials(
             @Valid @RequestBody CredentialValidationRequest request) {
@@ -67,7 +73,8 @@ public class AuthController {
         var userDto = userServiceClient.getUserByEmail(request.getEmail());
 
         // Если пользователя не нашли, то считаем, что его учетные данные некорректны
-        boolean isValid = userDto != null && userDto.getPassword().equals(request.getPassword());
+        boolean isValid = userDto != null && passwordEncoder.matches(request.getPassword(), userDto.getPassword());
+
 
         logger.info("Результат валидации для {}: {}", request.getEmail(), isValid);
         return ResponseEntity.ok(new ValidationResponse(isValid));

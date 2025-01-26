@@ -11,16 +11,17 @@ import java.util.stream.Collectors;
 
 public class MyUserDetails implements UserDetails {
 
-    private User user;
+    private final User user;
 
-    public MyUserDetails(User user){
-        this.user=user;
+    public MyUserDetails(User user) {
+        this.user = user;
     }
-
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Arrays.stream(user.getRoles().split(", "))
+        // Разделяем роли и создаем SimpleGrantedAuthority для каждой
+        return Arrays.stream(user.getRoles().split(","))
+                .map(role -> "ROLE_" + role.trim()) // Добавляем "ROLE_" к каждой роли, если это необходимо
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
     }
@@ -32,26 +33,26 @@ public class MyUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getName();
+        return user.getEmail(); // Используем email для аутентификации
     }
 
     @Override
     public boolean isAccountNonExpired() {
-        return true;
+        return true;  // Логика зависит от твоих требований
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return true;  // Логика зависит от твоих требований
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true;
+        return true;  // Логика зависит от твоих требований
     }
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return true;  // Логика зависит от твоих требований
     }
 }
