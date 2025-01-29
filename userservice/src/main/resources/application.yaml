@@ -4,6 +4,9 @@ spring:
     url: jdbc:postgresql://localhost:5432/security_db
     username: postgres
     password: password
+jwt:
+  secret-key: U2FsdGVkX1+z5Hc2edOqu9A6p6A8LTrzBwZUg5MNvJk=
+  expiration-time: 3600000
   jpa:
     hibernate:
       ddl-auto: update
