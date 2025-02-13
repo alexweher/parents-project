@@ -1,13 +1,12 @@
 package com.example.userservice.controller;
 
 import com.example.userservice.dto.UserDto;
-import com.example.userservice.exception.UserNotFoundException;
 import com.example.userservice.model.User;
 import com.example.userservice.service.UserService;
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,98 +16,76 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+
 @RestController
+@AllArgsConstructor
 @RequestMapping("/users")
 public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     // Создание пользователя
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        logger.info("Creating a new user: {}", user);
-
-        // Кодирование пароля перед сохранением
-        String encodedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(encodedPassword);
-
-        // Создание пользователя
-        User createdUser = userService.createUser(user);
-
+    public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserDto userDto) {
+        logger.info("Creating a new user: {}", userDto);
+        // Создание пользователя через сервис
+        UserDto createdUser = userService.createUser(userDto);
         // Возврат успешного ответа с созданным пользователем
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
 
-    // Получение всех пользователей
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
+    public ResponseEntity<List<UserDto>> getAllUsers() {
         logger.info("Fetching all users");
-        List<User> users = userService.getAllUsers();
-        return ResponseEntity.ok(users);
+        List<UserDto> userDto = userService.getAllUsers();  // Получаем список UserDto от сервиса
+        return ResponseEntity.ok(userDto);  // Возвращаем список UserDto
     }
+
 
     // Получение пользователя по Id
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable("id") Long id) {
+    public ResponseEntity<UserDto> getUserById(@PathVariable("id") Long id) {
         logger.info("Fetching user with ID: {}", id);
-        Optional<User> user = userService.getUserById(id);
-        return user.map(ResponseEntity::ok)
-                .orElseThrow(() -> new UserNotFoundException("User with ID " + id + " not found"));
+        UserDto userDto = userService.getUserById(id);
+        return ResponseEntity.ok(userDto);
     }
 
     // Обновление пользователя
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable("id") Long id,
-                                        @Valid @RequestBody User userDetails, BindingResult result) {
-        if (result.hasErrors()) {
-            logger.error("Validation errors while updating user with ID: {}", id);
-            // Здесь исключение с деталями ошибок будет обработано глобально
-            throw new IllegalArgumentException("Validation failed for user with ID " + id);
-        }
+                                        @Valid @RequestBody UserDto userDetails) {
         logger.info("Updating user with ID: {}", id);
-        User updatedUser = userService.updateUser(id, userDetails);
-        return ResponseEntity.ok(updatedUser);
+        UserDto updatedUserDto = userService.updateUser(id, userDetails); // передаем UserDto в сервис
+        return ResponseEntity.ok(updatedUserDto); // возвращаем UserDto
     }
 
-    // Удаление пользователя
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable("id") Long id) {
-        logger.info("Deleting user with ID: {}", id);
-        userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
-    }
 
     @GetMapping("/by-email")
     public ResponseEntity<UserDto> getUserByEmail(@RequestParam(name = "email") String email) {
         logger.info("Received request to fetch user by email: {}", email);
 
-        Optional<User> user = userService.getUserByEmail(email);
+        Optional<UserDto> userDto = userService.getUserByEmail(email);
 
-        if (user.isEmpty()) {
+        if (userDto.isEmpty()) {
             logger.warn("No user found for email: {}", email);
             return ResponseEntity.notFound().build();
         }
+        logger.info("Returning UserDto for email: {}", email);
 
-        User userEntity = user.get();
-        logger.info("User found: {}", userEntity);
+        return ResponseEntity.ok(userDto.get());
+    }
 
-        // Преобразование роли из строки в список
-        List<String> roles = Arrays.asList(userEntity.getRoles().split(","));
 
-        // Возвращаем UserDto с паролем
-        UserDto userDto = new UserDto(
-                userEntity.getEmail(),
-                roles,
-                userEntity.getPassword()  // передаем пароль
-        );
-
-        return ResponseEntity.ok(userDto);
+    // Удаление пользователя
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable("id") Long id) {
+        logger.info("Received request to delete user with ID: {}", id);
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 
 }
